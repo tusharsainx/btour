@@ -47,6 +47,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       authState.when(
         data: (user) {
           if (user != null) {
+            ref.read(navigationIndexProvider.notifier).state = 0;
             context.go('/home');
           }
         },
@@ -228,7 +229,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onPressed: _isLoading ? null : _handleGoogleSignIn,
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 12),
+                // Phone login button
+                FadeInUp(
+                  delay: const Duration(milliseconds: 850),
+                  child: _SocialLoginButton(
+                    icon: '📱',
+                    label: 'Continue with Phone',
+                    onPressed: _isLoading
+                        ? null
+                        : () => context.push('/phone-login'),
+                  ),
+                ),
+                const SizedBox(height: 32),
                 // Guest Login
                 FadeInUp(
                   delay: const Duration(milliseconds: 850),

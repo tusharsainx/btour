@@ -13,7 +13,7 @@ class ProfileScreen extends ConsumerWidget {
     final currentUser = ref.watch(currentUserProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackground(context),
       body: currentUser.when(
         data: (user) {
           if (user == null) {
@@ -92,13 +92,16 @@ class ProfileScreen extends ConsumerWidget {
                         icon: Icons.favorite_outline,
                         title: 'Wishlist',
                         subtitle: 'Your saved experiences',
-                        onTap: () => context.go('/wishlist'),
+                        onTap: () => context.push('/wishlist'),
                       ),
                       _ProfileMenuItem(
                         icon: Icons.history,
                         title: 'Booking History',
                         subtitle: 'View past experiences',
-                        onTap: () => context.go('/bookings'),
+                        onTap: () {
+                          ref.read(navigationIndexProvider.notifier).state = 2;
+                          context.go('/bookings');
+                        },
                       ),
                       _ProfileMenuItem(
                         icon: Icons.star_outline,
@@ -110,7 +113,7 @@ class ProfileScreen extends ConsumerWidget {
                         icon: Icons.settings_outlined,
                         title: 'Settings',
                         subtitle: 'App preferences',
-                        onTap: () => context.go('/settings'),
+                        onTap: () => context.push('/settings'),
                       ),
                       _ProfileMenuItem(
                         icon: Icons.help_outline,
@@ -123,14 +126,14 @@ class ProfileScreen extends ConsumerWidget {
                           icon: Icons.admin_panel_settings_outlined,
                           title: 'Admin Panel',
                           subtitle: 'Manage experiences',
-                          onTap: () => context.go('/admin'),
+                          onTap: () => context.push('/admin'),
                         ),
                       if (user.isGuide)
                         _ProfileMenuItem(
                           icon: Icons.tour_outlined,
                           title: 'Guide Dashboard',
                           subtitle: 'Manage your tours',
-                          onTap: () => context.go('/guide'),
+                          onTap: () => context.push('/guide'),
                         ),
                       const SizedBox(height: 16),
                       _ProfileMenuItem(
@@ -180,11 +183,13 @@ class _ProfileMenuItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurface(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: AppColors.isDark(context)
+                ? Colors.black.withValues(alpha: 0.2)
+                : Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

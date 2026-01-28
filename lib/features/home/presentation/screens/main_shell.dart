@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
-
-// Current navigation index provider
-final navigationIndexProvider = StateProvider<int>((ref) => 0);
+import '../../../../shared/providers/providers.dart';
 
 class MainShell extends ConsumerWidget {
   final Widget child;
@@ -19,10 +17,12 @@ class MainShell extends ConsumerWidget {
       body: child,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.getSurface(context),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
+              color: AppColors.isDark(context)
+                  ? Colors.black.withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.08),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),

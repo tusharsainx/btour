@@ -14,7 +14,7 @@ class WishlistScreen extends ConsumerWidget {
     final wishlistAsync = ref.watch(wishlistExperiencesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackground(context),
       appBar: AppBar(title: const Text('Wishlist')),
       body: wishlistAsync.when(
         data: (experiences) {

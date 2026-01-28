@@ -29,7 +29,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final searchedExperiences = ref.watch(searchedExperiencesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackground(context),
       body: SafeArea(
         child: Column(
           children: [

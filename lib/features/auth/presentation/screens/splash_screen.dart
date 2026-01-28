@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:animate_do/animate_do.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/providers/providers.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -48,8 +49,23 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   Future<void> _navigateToNext() async {
     await Future.delayed(const Duration(seconds: 3));
     if (mounted) {
-      // Check if first time user
-      context.go('/onboarding');
+      // Check for existing phone auth session
+      final existingUser = await ref
+          .read(phoneAuthProvider.notifier)
+          .checkExistingSession();
+      if (existingUser != null) {
+        ref.read(authNotifierProvider.notifier).signInWithPhone(existingUser);
+        context.go('/home');
+        return;
+      }
+
+      // Check if first launch (city not selected)
+      final cityState = ref.read(cityProvider);
+      if (cityState.isFirstLaunch) {
+        context.go('/location-permission');
+      } else {
+        context.go('/onboarding');
+      }
     }
   }
 
@@ -79,11 +95,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         child: Stack(
           children: [
             // Background pattern
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _PatternPainter(),
-              ),
-            ),
+            Positioned.fill(child: CustomPaint(painter: _PatternPainter())),
             // Content
             Center(
               child: Column(
@@ -110,10 +122,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                             ],
                           ),
                           child: const Center(
-                            child: Text(
-                              '🏛️',
-                              style: TextStyle(fontSize: 64),
-                            ),
+                            child: Text('🏛️', style: TextStyle(fontSize: 64)),
                           ),
                         ),
                       );
@@ -192,21 +201,9 @@ class _PatternPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     // Draw decorative circles
-    canvas.drawCircle(
-      Offset(size.width * 0.1, size.height * 0.2),
-      100,
-      paint,
-    );
-    canvas.drawCircle(
-      Offset(size.width * 0.9, size.height * 0.8),
-      150,
-      paint,
-    );
-    canvas.drawCircle(
-      Offset(size.width * 0.7, size.height * 0.3),
-      80,
-      paint,
-    );
+    canvas.drawCircle(Offset(size.width * 0.1, size.height * 0.2), 100, paint);
+    canvas.drawCircle(Offset(size.width * 0.9, size.height * 0.8), 150, paint);
+    canvas.drawCircle(Offset(size.width * 0.7, size.height * 0.3), 80, paint);
   }
 
   @override

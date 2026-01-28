@@ -13,12 +13,17 @@ class SettingsScreen extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackground(context),
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Text('Appearance', style: AppTypography.titleMedium),
+          Text(
+            'Appearance',
+            style: AppTypography.titleMedium.copyWith(
+              color: AppColors.getTextPrimary(context),
+            ),
+          ),
           const SizedBox(height: 12),
           _SettingsTile(
             icon: Icons.dark_mode_outlined,
@@ -27,7 +32,12 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => _showThemeDialog(context, ref),
           ),
           const SizedBox(height: 24),
-          Text('Notifications', style: AppTypography.titleMedium),
+          Text(
+            'Notifications',
+            style: AppTypography.titleMedium.copyWith(
+              color: AppColors.getTextPrimary(context),
+            ),
+          ),
           const SizedBox(height: 12),
           _SettingsTile(
             icon: Icons.notifications_outlined,
@@ -48,7 +58,12 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
-          Text('About', style: AppTypography.titleMedium),
+          Text(
+            'About',
+            style: AppTypography.titleMedium.copyWith(
+              color: AppColors.getTextPrimary(context),
+            ),
+          ),
           const SizedBox(height: 12),
           _SettingsTile(
             icon: Icons.info_outline,
@@ -151,7 +166,7 @@ class _SettingsTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.getSurface(context),
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(

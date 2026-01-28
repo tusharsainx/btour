@@ -15,7 +15,7 @@ class MyBookingsScreen extends ConsumerWidget {
     final bookingsAsync = ref.watch(userBookingsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackground(context),
       appBar: AppBar(title: const Text('My Bookings')),
       body: bookingsAsync.when(
         data: (bookings) {
@@ -27,143 +27,148 @@ class MyBookingsScreen extends ConsumerWidget {
             itemCount: bookings.length,
             itemBuilder: (context, index) {
               final booking = bookings[index];
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    // Image and details
-                    Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(16),
-                            bottomLeft: Radius.circular(16),
-                          ),
-                          child: CachedImage(
-                            imageUrl: booking.experienceImage,
-                            width: 100,
-                            height: 100,
-                          ),
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  booking.experienceTitle,
-                                  style: AppTypography.titleSmall,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.calendar_today,
-                                      size: 14,
-                                      color: AppColors.textMuted,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      DateFormat(
-                                        'd MMM yyyy',
-                                      ).format(booking.experienceDate),
-                                      style: AppTypography.bodySmall,
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.people,
-                                      size: 14,
-                                      color: AppColors.textMuted,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${booking.numberOfPeople} people',
-                                      style: AppTypography.bodySmall,
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Status bar
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+              return InkWell(
+                onTap: () =>
+                    context.push('/booking-confirmation/${booking.id}'),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
                       ),
-                      decoration: BoxDecoration(
-                        color: _getStatusColor(
-                          booking.status,
-                        ).withValues(alpha: 0.1),
-                        borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(16),
-                          bottomRight: Radius.circular(16),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // Image and details
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: _getStatusColor(booking.status),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _getStatusText(booking.status),
-                                style: AppTypography.labelMedium.copyWith(
-                                  color: _getStatusColor(booking.status),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (booking.status == 'completed' ||
-                              (booking.status == 'confirmed' &&
-                                  booking.experienceDate.isBefore(
-                                    DateTime.now(),
-                                  )))
-                            TextButton(
-                              onPressed: () => context.push(
-                                '/write-review/${booking.experienceId}/${booking.id}',
-                              ),
-                              child: const Text('Write Review'),
+                          ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(16),
+                              bottomLeft: Radius.circular(16),
                             ),
-                          Text(
-                            booking.formattedPrice,
-                            style: AppTypography.titleSmall.copyWith(
-                              color: AppColors.primary,
+                            child: CachedImage(
+                              imageUrl: booking.experienceImage,
+                              width: 100,
+                              height: 100,
+                            ),
+                          ),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    booking.experienceTitle,
+                                    style: AppTypography.titleSmall,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.calendar_today,
+                                        size: 14,
+                                        color: AppColors.textMuted,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        DateFormat(
+                                          'd MMM yyyy',
+                                        ).format(booking.experienceDate),
+                                        style: AppTypography.bodySmall,
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.people,
+                                        size: 14,
+                                        color: AppColors.textMuted,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${booking.numberOfPeople} people',
+                                        style: AppTypography.bodySmall,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                      // Status bar
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(
+                            booking.status,
+                          ).withValues(alpha: 0.1),
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(16),
+                            bottomRight: Radius.circular(16),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: _getStatusColor(booking.status),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _getStatusText(booking.status),
+                                  style: AppTypography.labelMedium.copyWith(
+                                    color: _getStatusColor(booking.status),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (booking.status == 'completed' ||
+                                (booking.status == 'confirmed' &&
+                                    booking.experienceDate.isBefore(
+                                      DateTime.now(),
+                                    )))
+                              TextButton(
+                                onPressed: () => context.push(
+                                  '/write-review/${booking.experienceId}/${booking.id}',
+                                ),
+                                child: const Text('Write Review'),
+                              ),
+                            Text(
+                              booking.formattedPrice,
+                              style: AppTypography.titleSmall.copyWith(
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

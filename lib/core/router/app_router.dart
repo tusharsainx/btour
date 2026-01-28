@@ -10,10 +10,14 @@ import 'package:btour/features/auth/presentation/screens/splash_screen.dart';
 import 'package:btour/features/auth/presentation/screens/onboarding_screen.dart';
 import 'package:btour/features/auth/presentation/screens/login_screen.dart';
 import 'package:btour/features/auth/presentation/screens/register_screen.dart';
+import 'package:btour/features/auth/presentation/screens/phone_login_screen.dart';
+import 'package:btour/features/auth/presentation/screens/otp_verify_screen.dart';
+import 'package:btour/features/auth/presentation/screens/location_permission_screen.dart';
 
 // Main app screens
 import 'package:btour/features/home/presentation/screens/main_shell.dart';
 import 'package:btour/features/home/presentation/screens/home_screen.dart';
+import 'package:btour/features/home/presentation/screens/city_selector_screen.dart';
 import 'package:btour/features/experiences/presentation/screens/explore_screen.dart';
 import 'package:btour/features/experiences/presentation/screens/experience_detail_screen.dart';
 import 'package:btour/features/experiences/presentation/screens/write_review_screen.dart';
@@ -101,6 +105,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SplashScreen(),
       ),
       GoRoute(
+        path: '/location-permission',
+        builder: (context, state) => const LocationPermissionScreen(),
+      ),
+      GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
       ),
@@ -108,6 +116,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/phone-login',
+        builder: (context, state) => const PhoneLoginScreen(),
+      ),
+      GoRoute(
+        path: '/otp-verify',
+        builder: (context, state) => const OtpVerifyScreen(),
+      ),
+      GoRoute(
+        path: '/city-selector',
+        builder: (context, state) => const CitySelectorScreen(),
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,

@@ -5,13 +5,13 @@ import '../models/models.dart';
 import '../../core/constants/app_constants.dart';
 import 'auth_provider.dart';
 
-// Mock Bookings
-final _mockBookings = <Booking>[];
+// Global mock bookings list that can be updated
+final mockBookingsListProvider = StateProvider<List<Booking>>((ref) => []);
 
-// User bookings provider
-final userBookingsProvider = StreamProvider<List<Booking>>((ref) {
-  // In mock mode, return an empty list or filter from _mockBookings
-  return Stream.value(_mockBookings);
+// User bookings provider - now reactive
+final userBookingsProvider = Provider<AsyncValue<List<Booking>>>((ref) {
+  final bookings = ref.watch(mockBookingsListProvider);
+  return AsyncValue.data(bookings);
 });
 
 // Guide bookings provider
@@ -38,20 +38,22 @@ final upcomingGuideBookingsProvider = Provider<AsyncValue<List<Booking>>>((
 });
 
 // All bookings provider (admin)
-final allBookingsProvider = StreamProvider<List<Booking>>((ref) {
-  return Stream.value(_mockBookings);
+final allBookingsProvider = Provider<AsyncValue<List<Booking>>>((ref) {
+  final bookings = ref.watch(mockBookingsListProvider);
+  return AsyncValue.data(bookings);
 });
 
-// Single booking provider
-final bookingProvider = FutureProvider.family<Booking?, String>((
+// Single booking provider - now reactive
+final bookingProvider = Provider.family<AsyncValue<Booking?>, String>((
   ref,
   id,
-) async {
-  await Future.delayed(const Duration(milliseconds: 500));
+) {
+  final bookings = ref.watch(mockBookingsListProvider);
   try {
-    return _mockBookings.firstWhere((b) => b.id == id);
+    final booking = bookings.firstWhere((b) => b.id == id);
+    return AsyncValue.data(booking);
   } catch (_) {
-    return null;
+    return const AsyncValue.data(null);
   }
 });
 
@@ -119,7 +121,9 @@ final bookingFormProvider =
 
 // Booking notifier for CRUD operations (Mocked)
 class BookingNotifier extends StateNotifier<AsyncValue<Booking?>> {
-  BookingNotifier() : super(const AsyncValue.data(null));
+  final Ref _ref;
+
+  BookingNotifier(this._ref) : super(const AsyncValue.data(null));
 
   Future<Booking?> createBooking({
     required Experience experience,
@@ -127,6 +131,7 @@ class BookingNotifier extends StateNotifier<AsyncValue<Booking?>> {
     required DateTime experienceDate,
     required int numberOfPeople,
     String? specialRequests,
+    List<TravelerInfo>? travelers,
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -136,6 +141,12 @@ class BookingNotifier extends StateNotifier<AsyncValue<Booking?>> {
       final bookingId = uuid.v4();
 
       final totalPrice = experience.price * numberOfPeople;
+
+      // Store travelers info in metadata
+      final metadata = <String, dynamic>{};
+      if (travelers != null && travelers.isNotEmpty) {
+        metadata['travelers'] = travelers.map((t) => t.toJson()).toList();
+      }
 
       final booking = Booking(
         id: bookingId,
@@ -156,10 +167,16 @@ class BookingNotifier extends StateNotifier<AsyncValue<Booking?>> {
         finalPrice: totalPrice, // Can add discounts later
         status: AppConstants.bookingPending,
         specialRequests: specialRequests,
+        metadata: metadata.isNotEmpty ? metadata : null,
         createdAt: DateTime.now(),
       );
 
-      _mockBookings.add(booking);
+      // Add to reactive list
+      final currentBookings = _ref.read(mockBookingsListProvider);
+      _ref.read(mockBookingsListProvider.notifier).state = [
+        ...currentBookings,
+        booking,
+      ];
 
       state = AsyncValue.data(booking);
       return booking;
@@ -172,9 +189,12 @@ class BookingNotifier extends StateNotifier<AsyncValue<Booking?>> {
   Future<void> updateBookingStatus(String bookingId, String status) async {
     try {
       await Future.delayed(const Duration(seconds: 1));
-      final index = _mockBookings.indexWhere((b) => b.id == bookingId);
+      final currentBookings = _ref.read(mockBookingsListProvider);
+      final index = currentBookings.indexWhere((b) => b.id == bookingId);
       if (index != -1) {
-        _mockBookings[index] = _mockBookings[index].copyWith(status: status);
+        final updatedList = [...currentBookings];
+        updatedList[index] = updatedList[index].copyWith(status: status);
+        _ref.read(mockBookingsListProvider.notifier).state = updatedList;
       }
     } catch (e) {
       rethrow;
@@ -184,12 +204,15 @@ class BookingNotifier extends StateNotifier<AsyncValue<Booking?>> {
   Future<void> confirmPayment(String bookingId, String paymentId) async {
     try {
       await Future.delayed(const Duration(seconds: 1));
-      final index = _mockBookings.indexWhere((b) => b.id == bookingId);
+      final currentBookings = _ref.read(mockBookingsListProvider);
+      final index = currentBookings.indexWhere((b) => b.id == bookingId);
       if (index != -1) {
-        _mockBookings[index] = _mockBookings[index].copyWith(
+        final updatedList = [...currentBookings];
+        updatedList[index] = updatedList[index].copyWith(
           status: AppConstants.bookingConfirmed,
           isPaid: true,
         );
+        _ref.read(mockBookingsListProvider.notifier).state = updatedList;
       }
     } catch (e) {
       rethrow;
@@ -199,11 +222,14 @@ class BookingNotifier extends StateNotifier<AsyncValue<Booking?>> {
   Future<void> cancelBooking(String bookingId, String reason) async {
     try {
       await Future.delayed(const Duration(seconds: 1));
-      final index = _mockBookings.indexWhere((b) => b.id == bookingId);
+      final currentBookings = _ref.read(mockBookingsListProvider);
+      final index = currentBookings.indexWhere((b) => b.id == bookingId);
       if (index != -1) {
-        _mockBookings[index] = _mockBookings[index].copyWith(
+        final updatedList = [...currentBookings];
+        updatedList[index] = updatedList[index].copyWith(
           status: AppConstants.bookingCancelled,
         );
+        _ref.read(mockBookingsListProvider.notifier).state = updatedList;
       }
     } catch (e) {
       rethrow;
@@ -213,11 +239,14 @@ class BookingNotifier extends StateNotifier<AsyncValue<Booking?>> {
   Future<void> completeBooking(String bookingId) async {
     try {
       await Future.delayed(const Duration(seconds: 1));
-      final index = _mockBookings.indexWhere((b) => b.id == bookingId);
+      final currentBookings = _ref.read(mockBookingsListProvider);
+      final index = currentBookings.indexWhere((b) => b.id == bookingId);
       if (index != -1) {
-        _mockBookings[index] = _mockBookings[index].copyWith(
+        final updatedList = [...currentBookings];
+        updatedList[index] = updatedList[index].copyWith(
           status: AppConstants.bookingCompleted,
         );
+        _ref.read(mockBookingsListProvider.notifier).state = updatedList;
       }
     } catch (e) {
       rethrow;
@@ -227,14 +256,13 @@ class BookingNotifier extends StateNotifier<AsyncValue<Booking?>> {
 
 final bookingNotifierProvider =
     StateNotifierProvider<BookingNotifier, AsyncValue<Booking?>>((ref) {
-      return BookingNotifier();
+      return BookingNotifier(ref);
     });
 
 // Booking statistics (for admin)
-// Booking statistics (for admin)
-final bookingStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  // Use mock data
-  final bookings = _mockBookings;
+final bookingStatsProvider = Provider<Map<String, dynamic>>((ref) {
+  // Use reactive mock data
+  final bookings = ref.watch(mockBookingsListProvider);
 
   final now = DateTime.now();
   final startOfMonth = DateTime(now.year, now.month, 1);

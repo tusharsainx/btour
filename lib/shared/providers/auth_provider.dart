@@ -125,6 +125,12 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
     }
   }
 
+  // Sign in with phone (for OTP login)
+  void signInWithPhone(UserModel user) {
+    state = AsyncValue.data(user);
+    exitGuestMode();
+  }
+
   // Sign out
   Future<void> signOut() async {
     await Future.delayed(const Duration(milliseconds: 500));
