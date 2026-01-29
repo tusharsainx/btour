@@ -1,37 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:btour/core/theme/app_colors.dart';
-import 'package:btour/core/theme/app_typography.dart';
-
-final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.system);
+import 'package:BTour/core/theme/app_colors.dart';
+import 'package:BTour/core/theme/app_typography.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
-
     return Scaffold(
       backgroundColor: AppColors.getBackground(context),
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Text(
-            'Appearance',
-            style: AppTypography.titleMedium.copyWith(
-              color: AppColors.getTextPrimary(context),
-            ),
-          ),
-          const SizedBox(height: 12),
-          _SettingsTile(
-            icon: Icons.dark_mode_outlined,
-            title: 'Dark Mode',
-            subtitle: _getThemeModeText(themeMode),
-            onTap: () => _showThemeDialog(context, ref),
-          ),
-          const SizedBox(height: 24),
           Text(
             'Notifications',
             style: AppTypography.titleMedium.copyWith(
@@ -81,66 +63,6 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () {},
           ),
         ],
-      ),
-    );
-  }
-
-  String _getThemeModeText(ThemeMode mode) {
-    switch (mode) {
-      case ThemeMode.light:
-        return 'Light';
-      case ThemeMode.dark:
-        return 'Dark';
-      case ThemeMode.system:
-        return 'System';
-    }
-  }
-
-  void _showThemeDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (context) => Consumer(
-        builder: (context, ref, _) => AlertDialog(
-          title: const Text('Choose Theme'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.light_mode),
-                title: const Text('Light'),
-                trailing: ref.watch(themeModeProvider) == ThemeMode.light
-                    ? const Icon(Icons.check, color: AppColors.primary)
-                    : null,
-                onTap: () {
-                  ref.read(themeModeProvider.notifier).state = ThemeMode.light;
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.dark_mode),
-                title: const Text('Dark'),
-                trailing: ref.watch(themeModeProvider) == ThemeMode.dark
-                    ? const Icon(Icons.check, color: AppColors.primary)
-                    : null,
-                onTap: () {
-                  ref.read(themeModeProvider.notifier).state = ThemeMode.dark;
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.settings_suggest),
-                title: const Text('System'),
-                trailing: ref.watch(themeModeProvider) == ThemeMode.system
-                    ? const Icon(Icons.check, color: AppColors.primary)
-                    : null,
-                onTap: () {
-                  ref.read(themeModeProvider.notifier).state = ThemeMode.system;
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

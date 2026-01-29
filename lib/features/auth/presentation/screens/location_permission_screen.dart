@@ -29,10 +29,10 @@ class _LocationPermissionScreenState
 
     setState(() => _isLoading = false);
 
-    if (success && mounted) {
+    if (success) {
       // Location detected successfully
       await ref.read(cityProvider.notifier).completeFirstLaunch();
-      context.go('/onboarding');
+      if (mounted) context.go('/onboarding');
     } else if (mounted) {
       // Location denied, show city selector
       _showCitySelector();
@@ -44,9 +44,9 @@ class _LocationPermissionScreenState
       MaterialPageRoute(builder: (_) => const CitySelectorScreen()),
     );
 
-    if (result != null && mounted) {
+    if (result != null) {
       await ref.read(cityProvider.notifier).completeFirstLaunch();
-      context.go('/onboarding');
+      if (mounted) context.go('/onboarding');
     }
   }
 
@@ -60,7 +60,10 @@ class _LocationPermissionScreenState
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [AppColors.primary.withValues(alpha: 0.1), Colors.white],
+            colors: [
+              AppColors.primary.withValues(alpha: 0.1),
+              AppColors.getBackground(context),
+            ],
           ),
         ),
         child: SafeArea(
@@ -72,8 +75,8 @@ class _LocationPermissionScreenState
                 // Illustration
                 FadeInDown(
                   child: Container(
-                    width: 200,
-                    height: 200,
+                    width: 120,
+                    height: 120,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [AppColors.primary, AppColors.primaryDark],
@@ -135,7 +138,7 @@ class _LocationPermissionScreenState
                     'Allow location access to automatically discover experiences near you in Bihar',
                     textAlign: TextAlign.center,
                     style: AppTypography.bodyLarge.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.getTextSecondary(context),
                     ),
                   ),
                 ),
@@ -146,9 +149,9 @@ class _LocationPermissionScreenState
                   child: Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: AppColors.getSurface(context),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: AppColors.getBorder(context)),
                     ),
                     child: Column(
                       children: [
@@ -230,12 +233,13 @@ class _LocationPermissionScreenState
                 title,
                 style: AppTypography.bodyMedium.copyWith(
                   fontWeight: FontWeight.w600,
+                  color: AppColors.getTextPrimary(context),
                 ),
               ),
               Text(
                 subtitle,
                 style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textMuted,
+                  color: AppColors.getTextSecondary(context),
                 ),
               ),
             ],

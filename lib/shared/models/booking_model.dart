@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class Booking {
   final String id;
   final String experienceId;
@@ -71,8 +69,8 @@ class Booking {
       userPhone: json['userPhone'] as String?,
       guideId: json['guideId'] as String,
       guideName: json['guideName'] as String,
-      bookingDate: (json['bookingDate'] as Timestamp).toDate(),
-      experienceDate: (json['experienceDate'] as Timestamp).toDate(),
+      bookingDate: DateTime.parse(json['bookingDate'].toString()),
+      experienceDate: DateTime.parse(json['experienceDate'].toString()),
       numberOfPeople: json['numberOfPeople'] as int,
       pricePerPerson: (json['pricePerPerson'] as num).toDouble(),
       totalPrice: (json['totalPrice'] as num).toDouble(),
@@ -84,13 +82,15 @@ class Booking {
       isPaid: json['isPaid'] as bool? ?? false,
       cancellationReason: json['cancellationReason'] as String?,
       cancelledAt: json['cancelledAt'] != null
-          ? (json['cancelledAt'] as Timestamp).toDate()
+          ? DateTime.parse(json['cancelledAt'].toString())
           : null,
       specialRequests: json['specialRequests'] as String?,
-      metadata: json['metadata'] as Map<String, dynamic>?,
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
+      metadata: json['metadata'] != null
+          ? Map<String, dynamic>.from(json['metadata'] as Map)
+          : null,
+      createdAt: DateTime.parse(json['createdAt'].toString()),
       updatedAt: json['updatedAt'] != null
-          ? (json['updatedAt'] as Timestamp).toDate()
+          ? DateTime.parse(json['updatedAt'].toString())
           : null,
     );
   }
@@ -107,8 +107,8 @@ class Booking {
       'userPhone': userPhone,
       'guideId': guideId,
       'guideName': guideName,
-      'bookingDate': Timestamp.fromDate(bookingDate),
-      'experienceDate': Timestamp.fromDate(experienceDate),
+      'bookingDate': bookingDate.toIso8601String(),
+      'experienceDate': experienceDate.toIso8601String(),
       'numberOfPeople': numberOfPeople,
       'pricePerPerson': pricePerPerson,
       'totalPrice': totalPrice,
@@ -119,12 +119,11 @@ class Booking {
       'paymentMethod': paymentMethod,
       'isPaid': isPaid,
       'cancellationReason': cancellationReason,
-      'cancelledAt':
-          cancelledAt != null ? Timestamp.fromDate(cancelledAt!) : null,
+      'cancelledAt': cancelledAt?.toIso8601String(),
       'specialRequests': specialRequests,
       'metadata': metadata,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
     };
   }
 
@@ -192,6 +191,6 @@ class Booking {
   bool get isConfirmed => status == 'confirmed';
   bool get isCancelled => status == 'cancelled';
   bool get isCompleted => status == 'completed';
-  
+
   String get formattedPrice => '₹${finalPrice.toStringAsFixed(0)}';
 }

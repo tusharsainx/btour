@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../models/models.dart';
 import '../../core/constants/app_constants.dart';
@@ -120,10 +120,47 @@ final bookingFormProvider =
     });
 
 // Booking notifier for CRUD operations (Mocked)
+// Bookings persisted in Hive
 class BookingNotifier extends StateNotifier<AsyncValue<Booking?>> {
   final Ref _ref;
+  Box? _box;
 
-  BookingNotifier(this._ref) : super(const AsyncValue.data(null));
+  BookingNotifier(this._ref) : super(const AsyncValue.data(null)) {
+    _initBox();
+  }
+
+  Future<void> _initBox() async {
+    if (_box != null && _box!.isOpen) return;
+    _box = await Hive.openBox('bookings_v1');
+    _loadBookings();
+  }
+
+  // Public method to force reload
+  void loadBookings() => _loadBookings();
+
+  void _loadBookings() {
+    if (_box == null) return;
+    final List<dynamic> rawList = _box!.values.toList();
+    final List<Booking> bookings = rawList.map((e) {
+      final map = Map<String, dynamic>.from(e);
+      return Booking.fromJson(map);
+    }).toList();
+
+    _ref.read(mockBookingsListProvider.notifier).state = bookings;
+  }
+
+  Future<void> _saveBooking(Booking booking) async {
+    if (_box == null) await _initBox(); // Ensure box is open
+    await _box!.put(booking.id, booking.toJson());
+    // Refresh list from box
+    _loadBookings();
+  }
+
+  Future<void> _deleteBooking(String id) async {
+    if (_box == null) await _initBox();
+    await _box!.delete(id);
+    _loadBookings();
+  }
 
   Future<Booking?> createBooking({
     required Experience experience,
@@ -171,12 +208,7 @@ class BookingNotifier extends StateNotifier<AsyncValue<Booking?>> {
         createdAt: DateTime.now(),
       );
 
-      // Add to reactive list
-      final currentBookings = _ref.read(mockBookingsListProvider);
-      _ref.read(mockBookingsListProvider.notifier).state = [
-        ...currentBookings,
-        booking,
-      ];
+      await _saveBooking(booking);
 
       state = AsyncValue.data(booking);
       return booking;
@@ -189,13 +221,18 @@ class BookingNotifier extends StateNotifier<AsyncValue<Booking?>> {
   Future<void> updateBookingStatus(String bookingId, String status) async {
     try {
       await Future.delayed(const Duration(seconds: 1));
+
       final currentBookings = _ref.read(mockBookingsListProvider);
-      final index = currentBookings.indexWhere((b) => b.id == bookingId);
-      if (index != -1) {
-        final updatedList = [...currentBookings];
-        updatedList[index] = updatedList[index].copyWith(status: status);
-        _ref.read(mockBookingsListProvider.notifier).state = updatedList;
-      }
+      final booking = currentBookings.firstWhere(
+        (b) => b.id == bookingId,
+        orElse: () => throw Exception("Booking not found"),
+      );
+
+      final updatedBooking = booking.copyWith(
+        status: status,
+        updatedAt: DateTime.now(),
+      );
+      await _saveBooking(updatedBooking);
     } catch (e) {
       rethrow;
     }
@@ -204,16 +241,20 @@ class BookingNotifier extends StateNotifier<AsyncValue<Booking?>> {
   Future<void> confirmPayment(String bookingId, String paymentId) async {
     try {
       await Future.delayed(const Duration(seconds: 1));
+
       final currentBookings = _ref.read(mockBookingsListProvider);
-      final index = currentBookings.indexWhere((b) => b.id == bookingId);
-      if (index != -1) {
-        final updatedList = [...currentBookings];
-        updatedList[index] = updatedList[index].copyWith(
-          status: AppConstants.bookingConfirmed,
-          isPaid: true,
-        );
-        _ref.read(mockBookingsListProvider.notifier).state = updatedList;
-      }
+      final booking = currentBookings.firstWhere(
+        (b) => b.id == bookingId,
+        orElse: () => throw Exception("Booking not found"),
+      );
+
+      final updatedBooking = booking.copyWith(
+        status: AppConstants.bookingConfirmed,
+        isPaid: true,
+        paymentId: paymentId,
+        updatedAt: DateTime.now(),
+      );
+      await _saveBooking(updatedBooking);
     } catch (e) {
       rethrow;
     }
@@ -222,15 +263,20 @@ class BookingNotifier extends StateNotifier<AsyncValue<Booking?>> {
   Future<void> cancelBooking(String bookingId, String reason) async {
     try {
       await Future.delayed(const Duration(seconds: 1));
+
       final currentBookings = _ref.read(mockBookingsListProvider);
-      final index = currentBookings.indexWhere((b) => b.id == bookingId);
-      if (index != -1) {
-        final updatedList = [...currentBookings];
-        updatedList[index] = updatedList[index].copyWith(
-          status: AppConstants.bookingCancelled,
-        );
-        _ref.read(mockBookingsListProvider.notifier).state = updatedList;
-      }
+      final booking = currentBookings.firstWhere(
+        (b) => b.id == bookingId,
+        orElse: () => throw Exception("Booking not found"),
+      );
+
+      final updatedBooking = booking.copyWith(
+        status: AppConstants.bookingCancelled,
+        cancellationReason: reason,
+        cancelledAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      await _saveBooking(updatedBooking);
     } catch (e) {
       rethrow;
     }
@@ -239,15 +285,18 @@ class BookingNotifier extends StateNotifier<AsyncValue<Booking?>> {
   Future<void> completeBooking(String bookingId) async {
     try {
       await Future.delayed(const Duration(seconds: 1));
+
       final currentBookings = _ref.read(mockBookingsListProvider);
-      final index = currentBookings.indexWhere((b) => b.id == bookingId);
-      if (index != -1) {
-        final updatedList = [...currentBookings];
-        updatedList[index] = updatedList[index].copyWith(
-          status: AppConstants.bookingCompleted,
-        );
-        _ref.read(mockBookingsListProvider.notifier).state = updatedList;
-      }
+      final booking = currentBookings.firstWhere(
+        (b) => b.id == bookingId,
+        orElse: () => throw Exception("Booking not found"),
+      );
+
+      final updatedBooking = booking.copyWith(
+        status: AppConstants.bookingCompleted,
+        updatedAt: DateTime.now(),
+      );
+      await _saveBooking(updatedBooking);
     } catch (e) {
       rethrow;
     }

@@ -1,0 +1,32 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="leaf_gradient" x1="100" y1="20" x2="100" y2="180" gradientUnits="userSpaceOnUse">
+<stop offset="0.3" stop-color="#D4451A"/>
+<stop offset="1" stop-color="#FF7043"/>
+</linearGradient>
+<linearGradient id="gold_gradient" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+<stop offset="0" stop-color="#D4AF37"/>
+<stop offset="1" stop-color="#FFD700"/>
+</linearGradient>
+</defs>
+
+<!-- Bodhi Leaf Shape -->
+<path d="M100 20 C 60 20 20 70 20 110 C 20 150 60 170 100 190 C 140 170 180 150 180 110 C 180 70 140 20 100 20 Z" fill="url(#leaf_gradient)" stroke="url(#gold_gradient)" stroke-width="4"/>
+
+<!-- Leaf Veins -->
+<path d="M100 25 V 185" stroke="#FFFFFF" stroke-opacity="0.3" stroke-width="2"/>
+<path d="M100 70 C 80 60 60 65 50 75" stroke="#FFFFFF" stroke-opacity="0.3" stroke-width="2"/>
+<path d="M100 70 C 120 60 140 65 150 75" stroke="#FFFFFF" stroke-opacity="0.3" stroke-width="2"/>
+<path d="M100 110 C 70 100 50 110 40 120" stroke="#FFFFFF" stroke-opacity="0.3" stroke-width="2"/>
+<path d="M100 110 C 130 100 150 110 160 120" stroke="#FFFFFF" stroke-opacity="0.3" stroke-width="2"/>
+
+<!-- Stupa Silhouette (Stylized) -->
+<path d="M70 140 H 130 A 30 30 0 0 0 70 140 Z" fill="white" fill-opacity="0.9"/>
+<rect x="65" y="140" width="70" height="10" rx="2" fill="white" fill-opacity="0.9"/>
+<rect x="60" y="150" width="80" height="10" rx="2" fill="white" fill-opacity="0.9"/>
+
+<!-- Spire -->
+<path d="M95 110 H 105 L 102 90 H 98 Z" fill="white" fill-opacity="0.9"/>
+<circle cx="100" cy="85" r="4" fill="white" fill-opacity="0.9"/>
+
+</svg>

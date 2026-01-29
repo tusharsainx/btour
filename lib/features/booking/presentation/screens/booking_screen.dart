@@ -23,13 +23,14 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
   int _numberOfPeople = 1;
   final _specialRequestsController = TextEditingController();
   bool _isLoading = false;
-
+  FocusNode? focusNode;
   // Traveler info controllers - one set per traveler
   List<_TravelerFormData> _travelers = [];
 
   @override
   void initState() {
     super.initState();
+    focusNode = FocusNode();
     _initializeTravelers();
   }
 
@@ -80,6 +81,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
   }
 
   Future<void> _handleBooking(Experience experience, UserModel? user) async {
+    focusNode?.unfocus();
     if (_selectedDate == null) {
       ScaffoldMessenger.of(
         context,
@@ -529,6 +531,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                 ),
                 const SizedBox(height: 12),
                 CustomTextField(
+                  focusNode: focusNode,
                   controller: _specialRequestsController,
                   hint: 'Any special requirements?',
                   maxLines: 3,
@@ -588,6 +591,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                     onPressed: () => _handleBooking(experience, null),
                   ),
                 ),
+                const SizedBox(height: 32),
               ],
             ),
           );

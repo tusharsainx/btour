@@ -60,7 +60,7 @@ class HomeScreen extends ConsumerWidget {
                               Text(
                                 _getGreeting(),
                                 style: AppTypography.bodyMedium.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: AppColors.getTextSecondary(context),
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -69,6 +69,7 @@ class HomeScreen extends ConsumerWidget {
                                   user?.name ?? 'Explorer',
                                   style: AppTypography.headlineSmall.copyWith(
                                     fontWeight: FontWeight.bold,
+                                    color: AppColors.getTextPrimary(context),
                                   ),
                                 ),
                                 loading: () => const SizedBox.shrink(),
@@ -100,7 +101,10 @@ class HomeScreen extends ConsumerWidget {
                       hint:
                           'Search experiences in ${cityState.selectedCity ?? "Bihar"}...',
                       readOnly: true,
-                      onTap: () => context.go('/explore'),
+                      onTap: () {
+                        ref.read(navigationIndexProvider.notifier).state = 1;
+                        context.go('/explore');
+                      },
                     ),
                   ),
                 ),
@@ -116,6 +120,7 @@ class HomeScreen extends ConsumerWidget {
                   context,
                   featuredExperiences,
                   cityState.selectedCity ?? 'Patna',
+                  ref,
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
@@ -145,7 +150,12 @@ class HomeScreen extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text('Categories', style: AppTypography.titleLarge),
+            child: Text(
+              'Categories',
+              style: AppTypography.titleLarge.copyWith(
+                color: AppColors.getTextPrimary(context),
+              ),
+            ),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -168,6 +178,7 @@ class HomeScreen extends ConsumerWidget {
                     onTap: () {
                       ref.read(selectedCategoryProvider.notifier).state =
                           category.id;
+                      ref.read(navigationIndexProvider.notifier).state = 1;
                       context.go('/explore');
                     },
                   ),
@@ -184,6 +195,7 @@ class HomeScreen extends ConsumerWidget {
     BuildContext context,
     AsyncValue experiences,
     String city,
+    WidgetRef ref,
   ) {
     return FadeInUp(
       delay: const Duration(milliseconds: 400),
@@ -195,9 +207,17 @@ class HomeScreen extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Featured in $city', style: AppTypography.titleLarge),
+                Text(
+                  'Featured in $city',
+                  style: AppTypography.titleLarge.copyWith(
+                    color: AppColors.getTextPrimary(context),
+                  ),
+                ),
                 TextButton(
-                  onPressed: () => context.go('/explore'),
+                  onPressed: () {
+                    ref.read(navigationIndexProvider.notifier).state = 1;
+                    context.go('/explore');
+                  },
                   child: Text(
                     'See All',
                     style: AppTypography.labelMedium.copyWith(
@@ -226,7 +246,7 @@ class HomeScreen extends ConsumerWidget {
                             'No featured experiences in $city yet',
                             textAlign: TextAlign.center,
                             style: AppTypography.bodyMedium.copyWith(
-                              color: AppColors.textSecondary,
+                              color: AppColors.getTextSecondary(context),
                             ),
                           ),
                         ],
@@ -243,7 +263,8 @@ class HomeScreen extends ConsumerWidget {
                     child: ExperienceCard(
                       experience: list[index],
                       isCompact: true,
-                      onTap: () => context.go('/experience/${list[index].id}'),
+                      onTap: () =>
+                          context.push('/experience/${list[index].id}'),
                     ),
                   ),
                 );
@@ -309,7 +330,7 @@ class _CitySelector extends StatelessWidget {
                     Text(
                       'Your Location',
                       style: AppTypography.caption.copyWith(
-                        color: AppColors.textMuted,
+                        color: AppColors.getTextSecondary(context),
                       ),
                     ),
                     Text(
@@ -325,7 +346,7 @@ class _CitySelector extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: AppColors.getSurface(context),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(

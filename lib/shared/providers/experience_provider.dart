@@ -305,9 +305,7 @@ final _mockExperiences = [
     price: 1500.0,
     duration: 6,
     maxGroupSize: 15,
-    images: [
-      'https://images.unsplash.com/photo-1599030989927-a97c2a0ee8a3?w=800',
-    ],
+    images: ['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800'],
     category: 'Heritage',
     rating: 4.7,
     reviewCount: 98,
@@ -449,9 +447,16 @@ final searchedExperiencesProvider = Provider<AsyncValue<List<Experience>>>((
   final category = ref.watch(selectedCategoryProvider);
   final priceRange = ref.watch(priceRangeProvider);
   final minRating = ref.watch(ratingFilterProvider);
+  final selectedCity = ref.watch(selectedCityNameProvider);
 
   return allExperiences.whenData((experiences) {
     return experiences.where((exp) {
+      // Filter by City first (Important)
+      final expCity = _getCityFromLocation(exp.location);
+      if (expCity.toLowerCase() != selectedCity.toLowerCase()) {
+        return false;
+      }
+
       // Search query filter
       if (query.isNotEmpty) {
         final matchesQuery =

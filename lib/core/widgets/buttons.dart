@@ -72,7 +72,8 @@ class PrimaryButton extends StatelessWidget {
               Text(
                 text,
                 style: AppTypography.button.copyWith(
-                  color: textColor ??
+                  color:
+                      textColor ??
                       (isOutlined ? AppColors.primary : Colors.white),
                 ),
               ),
@@ -81,14 +82,24 @@ class PrimaryButton extends StatelessWidget {
 
     if (isOutlined) {
       return OutlinedButton(
-        onPressed: isLoading ? null : onPressed,
+        onPressed: isLoading
+            ? null
+            : () {
+                FocusScope.of(context).unfocus();
+                onPressed?.call();
+              },
         style: buttonStyle,
         child: child,
       );
     }
 
     return ElevatedButton(
-      onPressed: isLoading ? null : onPressed,
+      onPressed: isLoading
+          ? null
+          : () {
+              FocusScope.of(context).unfocus();
+              onPressed?.call();
+            },
       style: buttonStyle,
       child: child,
     );
@@ -114,22 +125,22 @@ class SecondaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextButton(
-      onPressed: onPressed,
+      onPressed: onPressed == null
+          ? null
+          : () {
+              FocusScope.of(context).unfocus();
+              onPressed?.call();
+            },
       style: TextButton.styleFrom(
         foregroundColor: AppColors.primary,
         minimumSize: Size(width ?? 0, height),
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[
-            Icon(icon, size: 18),
-            const SizedBox(width: 6),
-          ],
+          if (icon != null) ...[Icon(icon, size: 18), const SizedBox(width: 6)],
           Text(text, style: AppTypography.labelLarge),
         ],
       ),
@@ -176,7 +187,12 @@ class IconButtonCustom extends StatelessWidget {
             : null,
       ),
       child: IconButton(
-        onPressed: onPressed,
+        onPressed: onPressed == null
+            ? null
+            : () {
+                FocusScope.of(context).unfocus();
+                onPressed?.call();
+              },
         icon: Icon(icon),
         iconSize: iconSize,
         color: iconColor ?? AppColors.textPrimary,
@@ -221,7 +237,12 @@ class GradientButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: isLoading ? null : onPressed,
+          onTap: isLoading
+              ? null
+              : () {
+                  FocusScope.of(context).unfocus();
+                  onPressed?.call();
+                },
           borderRadius: BorderRadius.circular(12),
           child: Center(
             child: isLoading

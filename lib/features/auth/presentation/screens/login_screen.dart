@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/buttons.dart';
 import '../../../../core/widgets/text_fields.dart';
 import '../../../../shared/providers/providers.dart';
+import '../../../../shared/models/user_model.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -16,331 +18,305 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _otpController = TextEditingController();
+  final _phoneController = TextEditingController(); // Added for manual input
   bool _isLoading = false;
+  bool _isCheckingUser = true;
+  UserModel? _localUser;
+  bool _showOtpInput = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLocalUser();
+  }
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    _otpController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
-
-    await ref
-        .read(authNotifierProvider.notifier)
-        .signInWithEmail(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
+  Future<void> _checkLocalUser() async {
+    final user = await ref.read(authNotifierProvider.notifier).getLocalUser();
 
     if (mounted) {
-      setState(() => _isLoading = false);
+      // Don't auto-redirect. Just set state.
+      setState(() {
+        _localUser = user;
+        _isCheckingUser = false;
+      });
 
-      final authState = ref.read(authNotifierProvider);
-      authState.when(
-        data: (user) {
-          if (user != null) {
-            ref.read(navigationIndexProvider.notifier).state = 0;
-            context.go('/home');
-          }
-        },
-        loading: () {},
-        error: (error, _) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(error.toString()),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        },
-      );
+      if (user != null) {
+        if (user.biometricEnabled) {
+          _handleBiometricLogin();
+        } else {
+          setState(() {
+            _showOtpInput = true;
+          });
+        }
+      } else {
+        // If no user, we naturally show the "Enter Phone" UI below
+      }
     }
   }
 
-  Future<void> _handleGoogleSignIn() async {
+  Future<void> _handleBiometricLogin() async {
     setState(() => _isLoading = true);
+    try {
+      final success = await ref
+          .read(authNotifierProvider.notifier)
+          .loginWithBiometrics();
 
-    await ref.read(authNotifierProvider.notifier).signInWithGoogle();
+      if (mounted) {
+        if (success) {
+          context.go('/home');
+        } else {
+          // Failed or canceled, show OTP fallback
+          setState(() {
+            _showOtpInput = true;
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _showOtpInput = true;
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Biometric failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleOtpLogin() async {
+    setState(() => _isLoading = true);
+    try {
+      final success = await ref
+          .read(authNotifierProvider.notifier)
+          .verifyOtp(_otpController.text);
+      if (success) {
+        // If we have a local user, use their number.
+        // If not (manual entry), use the entered phone number logic?
+        // Actually, for local-first single-user, we MUST match the stored user.
+
+        final user = await ref
+            .read(authNotifierProvider.notifier)
+            .getLocalUser();
+
+        if (user == null) {
+          throw Exception("Account not found on this device.");
+        }
+
+        // If we manually entered a phone, maybe check if it matches?
+        // But for now, if the OTP validates (mocked), and a user exists, we log them in.
+
+        await ref
+            .read(authNotifierProvider.notifier)
+            .loginWithOtp(user.phoneNumber ?? '');
+
+        if (mounted) context.go('/home');
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Invalid OTP')));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login failed: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // Handle "Find Account" / Manual Login flow
+  Future<void> _handleManualLoginCheck() async {
+    // Since this is a local-only app, checking "if user exists" is just checking local storage.
+    // If _localUser is null, subsequent checks will also be null unless we pulled from cloud (which we don't).
+
+    setState(() => _isLoading = true);
+    await Future.delayed(const Duration(seconds: 1)); // Mock network
 
     if (mounted) {
       setState(() => _isLoading = false);
-
-      final authState = ref.read(authNotifierProvider);
-      if (authState.value != null) {
-        context.go('/home');
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No account found. Please Register.")),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isCheckingUser) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    // Determine what to show based on if we found a user
+    final hasUser = _localUser != null;
+    final userName = hasUser ? _localUser!.name : "Traveler";
+    final phoneNumber = hasUser
+        ? (_localUser!.phoneNumber ?? _localUser!.email)
+        : null;
+
     return Scaffold(
+      backgroundColor: AppColors.getBackground(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 40),
-                // Logo
-                FadeInDown(
-                  child: Center(
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Text('🏛️', style: TextStyle(fontSize: 48)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 40),
+              FadeInDown(
+                child: Center(
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: SvgPicture.asset(
+                        'assets/icons/app_icon.svg',
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
-                // Welcome text
-                FadeInDown(
-                  delay: const Duration(milliseconds: 100),
+              ),
+              const SizedBox(height: 32),
+              FadeInDown(
+                delay: const Duration(milliseconds: 100),
+                child: Center(
                   child: Text(
-                    'Welcome Back',
+                    hasUser ? 'Welcome Back,' : 'Welcome,',
+                    style: AppTypography.headlineMedium.copyWith(
+                      color: AppColors.getTextSecondary(context),
+                    ),
+                  ),
+                ),
+              ),
+              FadeInDown(
+                delay: const Duration(milliseconds: 200),
+                child: Center(
+                  child: Text(
+                    userName,
                     style: AppTypography.headlineLarge.copyWith(
                       fontWeight: FontWeight.bold,
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                FadeInDown(
-                  delay: const Duration(milliseconds: 200),
-                  child: Text(
-                    'Sign in to continue exploring Bihar',
-                    style: AppTypography.bodyLarge.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 40),
-                // Email field
-                FadeInUp(
-                  delay: const Duration(milliseconds: 300),
-                  child: CustomTextField(
-                    controller: _emailController,
-                    label: 'Email',
-                    hint: 'Enter your email',
-                    keyboardType: TextInputType.emailAddress,
-                    prefixIcon: Icons.email_outlined,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Password field
-                FadeInUp(
-                  delay: const Duration(milliseconds: 400),
-                  child: CustomTextField(
-                    controller: _passwordController,
-                    label: 'Password',
-                    hint: 'Enter your password',
-                    obscureText: true,
-                    prefixIcon: Icons.lock_outlined,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
-                      if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Forgot password
-                FadeInUp(
-                  delay: const Duration(milliseconds: 500),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        _showForgotPasswordDialog();
-                      },
-                      child: Text(
-                        'Forgot Password?',
-                        style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.primary,
+              ),
+              const SizedBox(height: 40),
+
+              if (hasUser) ...[
+                // Exisiting User Flow
+                if (_showOtpInput) ...[
+                  FadeInUp(
+                    child: Column(
+                      children: [
+                        Text(
+                          "Enter OTP sent to $phoneNumber",
+                          style: AppTypography.bodyMedium,
                         ),
-                      ),
+                        const SizedBox(height: 16),
+                        CustomTextField(
+                          controller: _otpController,
+                          hint: 'Enter 6-digit OTP',
+                          keyboardType: TextInputType.number,
+                          prefixIcon: Icons.lock_clock,
+                        ),
+                        const SizedBox(height: 24),
+                        GradientButton(
+                          text: 'Verify & Login',
+                          isLoading: _isLoading,
+                          onPressed: _handleOtpLogin,
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                // Login button
-                FadeInUp(
-                  delay: const Duration(milliseconds: 600),
-                  child: GradientButton(
-                    text: 'Sign In',
-                    isLoading: _isLoading,
-                    onPressed: _handleLogin,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Or divider
-                FadeInUp(
-                  delay: const Duration(milliseconds: 700),
-                  child: Row(
-                    children: [
-                      const Expanded(child: Divider()),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'or continue with',
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.textMuted,
-                          ),
+                ] else ...[
+                  Center(
+                    child: Column(
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        Text(
+                          "Authenticating...",
+                          style: AppTypography.bodyMedium,
                         ),
-                      ),
-                      const Expanded(child: Divider()),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Social login buttons
-                FadeInUp(
-                  delay: const Duration(milliseconds: 800),
-                  child: _SocialLoginButton(
-                    icon: 'G',
-                    label: 'Continue with Google',
-                    onPressed: _isLoading ? null : _handleGoogleSignIn,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Phone login button
-                FadeInUp(
-                  delay: const Duration(milliseconds: 850),
-                  child: _SocialLoginButton(
-                    icon: '📱',
-                    label: 'Continue with Phone',
-                    onPressed: _isLoading
-                        ? null
-                        : () => context.push('/phone-login'),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                // Guest Login
-                FadeInUp(
-                  delay: const Duration(milliseconds: 850),
-                  child: Center(
-                    child: TextButton(
-                      onPressed: () {
-                        ref
-                            .read(authNotifierProvider.notifier)
-                            .continueAsGuest();
-                        context.go('/home');
-                      },
-                      child: Text(
-                        'Continue as Guest',
-                        style: AppTypography.labelLarge.copyWith(
-                          color: AppColors.textSecondary,
-                          decoration: TextDecoration.underline,
+                        const SizedBox(height: 16),
+                        TextButton(
+                          onPressed: () {
+                            FocusScope.of(context).unfocus();
+                            setState(() => _showOtpInput = true);
+                          },
+                          child: const Text("Use OTP instead"),
                         ),
-                      ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                // Register link
+                ],
+              ] else ...[
+                // No Local User Found Flow
                 FadeInUp(
-                  delay: const Duration(milliseconds: 900),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Column(
                     children: [
                       Text(
-                        "Don't have an account? ",
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                        "Please log in to continue",
+                        style: AppTypography.bodyMedium,
                       ),
-                      GestureDetector(
-                        onTap: () => context.go('/register'),
-                        child: Text(
-                          'Sign Up',
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w600,
+                      const SizedBox(height: 16),
+                      CustomTextField(
+                        controller: _phoneController,
+                        hint: 'Phone Number',
+                        keyboardType: TextInputType.phone,
+                        prefixIcon: Icons.phone,
+                      ),
+                      const SizedBox(height: 24),
+                      GradientButton(
+                        text: 'Login',
+                        isLoading: _isLoading,
+                        onPressed: _handleManualLoginCheck,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Don't have an account?",
+                            style: AppTypography.bodySmall.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
                           ),
-                        ),
+                          TextButton(
+                            onPressed: () {
+                              FocusScope.of(context).unfocus();
+                              context.go('/register');
+                            },
+                            child: const Text("Create Account"),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
               ],
-            ),
+            ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _showForgotPasswordDialog() {
-    final emailController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reset Password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Enter your email to receive a password reset link.'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(hintText: 'Email'),
-              keyboardType: TextInputType.emailAddress,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (emailController.text.isNotEmpty) {
-                await ref
-                    .read(authNotifierProvider.notifier)
-                    .resetPassword(emailController.text.trim());
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Password reset email sent!'),
-                      backgroundColor: AppColors.success,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Send'),
-          ),
-        ],
       ),
     );
   }
@@ -363,7 +339,7 @@ class _SocialLoginButton extends StatelessWidget {
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        side: const BorderSide(color: AppColors.border),
+        side: BorderSide(color: AppColors.getBorder(context)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: Row(
@@ -391,7 +367,7 @@ class _SocialLoginButton extends StatelessWidget {
           Text(
             label,
             style: AppTypography.labelLarge.copyWith(
-              color: AppColors.textPrimary,
+              color: AppColors.getTextPrimary(context),
             ),
           ),
         ],

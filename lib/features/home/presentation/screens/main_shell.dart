@@ -12,6 +12,8 @@ class MainShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(navigationIndexProvider);
+    // Ensure bookings are loaded
+    ref.watch(bookingNotifierProvider);
 
     return Scaffold(
       body: child,

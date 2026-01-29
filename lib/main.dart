@@ -22,15 +22,8 @@ void main() async {
   // Initialize Hive for local storage
   await Hive.initFlutter();
 
-  // Set system UI overlay style
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Colors.white,
-      systemNavigationBarIconBrightness: Brightness.dark,
-    ),
-  );
+  // Set system UI overlay style handled by AppTheme
+  // SystemChrome.setSystemUIOverlayStyle(...)
 
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
@@ -47,14 +40,11 @@ class BiharTourismApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
-    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       title: 'Bihar Tourism',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode,
       routerConfig: router,
     );
   }

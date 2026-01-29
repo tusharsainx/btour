@@ -12,6 +12,10 @@ class MyBookingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Force load bookings
+    Future.microtask(
+      () => ref.read(bookingNotifierProvider.notifier).loadBookings(),
+    );
     final bookingsAsync = ref.watch(userBookingsProvider);
 
     return Scaffold(
@@ -20,7 +24,7 @@ class MyBookingsScreen extends ConsumerWidget {
       body: bookingsAsync.when(
         data: (bookings) {
           if (bookings.isEmpty) {
-            return _buildEmptyState(context);
+            return _buildEmptyState(context, ref);
           }
           return ListView.builder(
             padding: const EdgeInsets.all(20),
@@ -110,6 +114,41 @@ class MyBookingsScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
+                      // Special Request (if any)
+                      if (booking.specialRequests != null &&
+                          booking.specialRequests!.isNotEmpty)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.getBackground(context),
+                            border: const Border(
+                              top: BorderSide(color: AppColors.border),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Special Request:',
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: AppColors.textMuted,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                booking.specialRequests!,
+                                style: AppTypography.bodySmall,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
                       // Status bar
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -180,7 +219,7 @@ class MyBookingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -199,7 +238,10 @@ class MyBookingsScreen extends ConsumerWidget {
           PrimaryButton(
             text: 'Explore Now',
             width: 200,
-            onPressed: () => context.go('/explore'),
+            onPressed: () {
+              ref.read(navigationIndexProvider.notifier).state = 1;
+              context.go('/explore');
+            },
           ),
         ],
       ),

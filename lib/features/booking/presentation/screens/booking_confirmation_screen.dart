@@ -141,8 +141,9 @@ class BookingConfirmationScreen extends ConsumerWidget {
                               .entries
                               .map((entry) {
                                 final index = entry.key;
-                                final traveler =
-                                    entry.value as Map<String, dynamic>;
+                                final traveler = Map<String, dynamic>.from(
+                                  entry.value as Map,
+                                );
                                 return Padding(
                                   padding: EdgeInsets.only(
                                     top: index > 0 ? 12 : 0,
