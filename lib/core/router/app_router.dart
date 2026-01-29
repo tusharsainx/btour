@@ -2,33 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:btour/shared/providers/providers.dart';
-import 'package:btour/shared/models/models.dart';
+import 'package:BTour/shared/providers/providers.dart';
+import 'package:BTour/shared/models/models.dart';
 
 // Auth screens
-import 'package:btour/features/auth/presentation/screens/splash_screen.dart';
-import 'package:btour/features/auth/presentation/screens/onboarding_screen.dart';
-import 'package:btour/features/auth/presentation/screens/login_screen.dart';
-import 'package:btour/features/auth/presentation/screens/register_screen.dart';
+import 'package:BTour/features/auth/presentation/screens/splash_screen.dart';
+import 'package:BTour/features/auth/presentation/screens/onboarding_screen.dart';
+import 'package:BTour/features/auth/presentation/screens/login_screen.dart';
+import 'package:BTour/features/auth/presentation/screens/register_screen.dart';
+// import 'package:BTour/features/auth/presentation/screens/phone_login_screen.dart';
+// import 'package:BTour/features/auth/presentation/screens/otp_verify_screen.dart';
+import 'package:BTour/features/auth/presentation/screens/location_permission_screen.dart';
 
 // Main app screens
-import 'package:btour/features/home/presentation/screens/main_shell.dart';
-import 'package:btour/features/home/presentation/screens/home_screen.dart';
-import 'package:btour/features/experiences/presentation/screens/explore_screen.dart';
-import 'package:btour/features/experiences/presentation/screens/experience_detail_screen.dart';
-import 'package:btour/features/experiences/presentation/screens/write_review_screen.dart';
-import 'package:btour/features/booking/presentation/screens/booking_screen.dart';
-import 'package:btour/features/booking/presentation/screens/my_bookings_screen.dart';
-import 'package:btour/features/booking/presentation/screens/booking_confirmation_screen.dart';
-import 'package:btour/features/profile/presentation/screens/profile_screen.dart';
-import 'package:btour/features/profile/presentation/screens/wishlist_screen.dart';
-import 'package:btour/features/profile/presentation/screens/settings_screen.dart';
+import 'package:BTour/features/home/presentation/screens/main_shell.dart';
+import 'package:BTour/features/home/presentation/screens/home_screen.dart';
+import 'package:BTour/features/home/presentation/screens/city_selector_screen.dart';
+import 'package:BTour/features/experiences/presentation/screens/explore_screen.dart';
+import 'package:BTour/features/experiences/presentation/screens/experience_detail_screen.dart';
+import 'package:BTour/features/experiences/presentation/screens/write_review_screen.dart';
+import 'package:BTour/features/booking/presentation/screens/booking_screen.dart';
+import 'package:BTour/features/booking/presentation/screens/my_bookings_screen.dart';
+import 'package:BTour/features/booking/presentation/screens/booking_confirmation_screen.dart';
+import 'package:BTour/features/profile/presentation/screens/profile_screen.dart';
+import 'package:BTour/features/profile/presentation/screens/wishlist_screen.dart';
+import 'package:BTour/features/profile/presentation/screens/settings_screen.dart';
 
 // Admin screens
-import 'package:btour/features/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'package:BTour/features/admin/presentation/screens/admin_dashboard_screen.dart';
 
 // Guide screens
-import 'package:btour/features/guide/presentation/screens/guide_dashboard_screen.dart';
+import 'package:BTour/features/guide/presentation/screens/guide_dashboard_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -67,7 +71,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           state.matchedLocation == '/login' ||
           state.matchedLocation == '/register' ||
           state.matchedLocation == '/onboarding' ||
-          state.matchedLocation == '/splash';
+          state.matchedLocation == '/splash' ||
+          state.matchedLocation == '/location-permission';
 
       if (state.matchedLocation == '/splash' ||
           state.matchedLocation == '/onboarding') {
@@ -101,6 +106,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SplashScreen(),
       ),
       GoRoute(
+        path: '/location-permission',
+        builder: (context, state) => const LocationPermissionScreen(),
+      ),
+      GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
       ),
@@ -108,6 +117,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      // GoRoute(
+      //   path: '/phone-login',
+      //   builder: (context, state) => const PhoneLoginScreen(),
+      // ),
+      // GoRoute(
+      //   path: '/otp-verify',
+      //   builder: (context, state) => const OtpVerifyScreen(),
+      // ),
+      GoRoute(
+        path: '/city-selector',
+        builder: (context, state) => const CitySelectorScreen(),
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,

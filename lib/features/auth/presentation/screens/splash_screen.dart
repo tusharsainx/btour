@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../shared/providers/providers.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -48,8 +51,41 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   Future<void> _navigateToNext() async {
     await Future.delayed(const Duration(seconds: 3));
     if (mounted) {
-      // Check if first time user
-      context.go('/onboarding');
+      // Check if we have a local user (Returning User)
+      final localUser = await ref
+          .read(authNotifierProvider.notifier)
+          .getLocalUser();
+      if (localUser != null) {
+        context.go('/login');
+        return;
+      }
+
+      // Check auth state (Session state)
+      final authState = ref.read(authNotifierProvider);
+
+      if (authState.value != null) {
+        // This block might be redundant now if localUser covers it,
+        // but keeping for safety if session is valid.
+        context.go('/login');
+        return;
+      }
+
+      // Check if first launch (city not selected)
+      final cityState = ref.read(cityProvider);
+      if (cityState.isFirstLaunch) {
+        // Check if permission is already given
+        final permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.always ||
+            permission == LocationPermission.whileInUse) {
+          // Permission already granted, mark first launch complete and go to onboarding
+          await ref.read(cityProvider.notifier).completeFirstLaunch();
+          context.go('/onboarding');
+        } else {
+          context.go('/location-permission');
+        }
+      } else {
+        context.go('/login');
+      }
     }
   }
 
@@ -79,11 +115,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         child: Stack(
           children: [
             // Background pattern
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _PatternPainter(),
-              ),
-            ),
+            Positioned.fill(child: CustomPaint(painter: _PatternPainter())),
             // Content
             Center(
               child: Column(
@@ -109,10 +141,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                               ),
                             ],
                           ),
-                          child: const Center(
-                            child: Text(
-                              '🏛️',
-                              style: TextStyle(fontSize: 64),
+                          child: Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: SvgPicture.asset(
+                                'assets/icons/app_icon.svg',
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ),
                         ),
@@ -160,22 +195,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 ),
               ),
             ),
-            // Version
-            Positioned(
-              bottom: 40,
-              left: 0,
-              right: 0,
-              child: FadeIn(
-                delay: const Duration(milliseconds: 1200),
-                child: Text(
-                  'Version 1.0.0',
-                  textAlign: TextAlign.center,
-                  style: AppTypography.caption.copyWith(
-                    color: Colors.white.withValues(alpha: 0.6),
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -192,21 +211,9 @@ class _PatternPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     // Draw decorative circles
-    canvas.drawCircle(
-      Offset(size.width * 0.1, size.height * 0.2),
-      100,
-      paint,
-    );
-    canvas.drawCircle(
-      Offset(size.width * 0.9, size.height * 0.8),
-      150,
-      paint,
-    );
-    canvas.drawCircle(
-      Offset(size.width * 0.7, size.height * 0.3),
-      80,
-      paint,
-    );
+    canvas.drawCircle(Offset(size.width * 0.1, size.height * 0.2), 100, paint);
+    canvas.drawCircle(Offset(size.width * 0.9, size.height * 0.8), 150, paint);
+    canvas.drawCircle(Offset(size.width * 0.7, size.height * 0.3), 80, paint);
   }
 
   @override

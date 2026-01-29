@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserModel {
   final String id;
@@ -12,6 +12,9 @@ class UserModel {
   final bool isActive;
   final List<String> wishlist;
   final Map<String, dynamic>? preferences;
+  final bool emailVerified;
+  final bool phoneVerified;
+  final bool biometricEnabled;
 
   UserModel({
     required this.id,
@@ -25,6 +28,9 @@ class UserModel {
     this.isActive = true,
     this.wishlist = const [],
     this.preferences,
+    this.emailVerified = false,
+    this.phoneVerified = false,
+    this.biometricEnabled = false,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -35,13 +41,23 @@ class UserModel {
       name: json['name'] as String,
       photoUrl: json['photoUrl'] as String?,
       role: json['role'] as String? ?? 'tourist',
-      createdAt: (json['createdAt'] as Timestamp).toDate(),
+      createdAt: json['createdAt'] is String
+          ? DateTime.parse(json['createdAt'])
+          : (json['createdAt'] as dynamic)
+                .toDate(), // Handle legacy Timestamp if needed
       updatedAt: json['updatedAt'] != null
-          ? (json['updatedAt'] as Timestamp).toDate()
+          ? (json['updatedAt'] is String
+                ? DateTime.parse(json['updatedAt'])
+                : (json['updatedAt'] as dynamic).toDate())
           : null,
       isActive: json['isActive'] as bool? ?? true,
       wishlist: List<String>.from(json['wishlist'] ?? []),
-      preferences: json['preferences'] as Map<String, dynamic>?,
+      preferences: json['preferences'] != null
+          ? Map<String, dynamic>.from(json['preferences'] as Map)
+          : null,
+      emailVerified: json['emailVerified'] as bool? ?? false,
+      phoneVerified: json['phoneVerified'] as bool? ?? false,
+      biometricEnabled: json['biometricEnabled'] as bool? ?? false,
     );
   }
 
@@ -53,11 +69,14 @@ class UserModel {
       'name': name,
       'photoUrl': photoUrl,
       'role': role,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
       'isActive': isActive,
       'wishlist': wishlist,
       'preferences': preferences,
+      'emailVerified': emailVerified,
+      'phoneVerified': phoneVerified,
+      'biometricEnabled': biometricEnabled,
     };
   }
 
@@ -73,6 +92,9 @@ class UserModel {
     bool? isActive,
     List<String>? wishlist,
     Map<String, dynamic>? preferences,
+    bool? emailVerified,
+    bool? phoneVerified,
+    bool? biometricEnabled,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -86,6 +108,9 @@ class UserModel {
       isActive: isActive ?? this.isActive,
       wishlist: wishlist ?? this.wishlist,
       preferences: preferences ?? this.preferences,
+      emailVerified: emailVerified ?? this.emailVerified,
+      phoneVerified: phoneVerified ?? this.phoneVerified,
+      biometricEnabled: biometricEnabled ?? this.biometricEnabled,
     );
   }
 

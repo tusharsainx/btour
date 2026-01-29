@@ -36,7 +36,7 @@ class AppConstants {
   
   // Popular Locations in Bihar
   static const Map<String, Map<String, double>> biharLocations = {
-    'Patna': {'lat': 25.5941, 'lng': 85.1376},
+    'Patna': {'lat': 25.595219, 'lng': 85.138428},
     'Bodh Gaya': {'lat': 24.6961, 'lng': 84.9869},
     'Nalanda': {'lat': 25.1357, 'lng': 85.4438},
     'Rajgir': {'lat': 25.0285, 'lng': 85.4177},

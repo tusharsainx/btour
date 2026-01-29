@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:btour/core/theme/app_colors.dart';
-import 'package:btour/core/theme/app_typography.dart';
-import 'package:btour/core/widgets/widgets.dart';
-import 'package:btour/shared/providers/providers.dart';
+import 'package:BTour/core/theme/app_colors.dart';
+import 'package:BTour/core/theme/app_typography.dart';
+import 'package:BTour/core/widgets/widgets.dart';
+import 'package:BTour/shared/providers/providers.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {
   const ExploreScreen({super.key});
@@ -29,7 +29,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     final searchedExperiences = ref.watch(searchedExperiencesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackground(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -38,7 +38,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Explore', style: AppTypography.headlineMedium),
+                  Text(
+                    'Explore',
+                    style: AppTypography.headlineMedium.copyWith(
+                      color: AppColors.getTextPrimary(context),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   SearchTextField(
                     controller: _searchController,
@@ -92,7 +97,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               child: searchedExperiences.when(
                 data: (experiences) {
                   if (experiences.isEmpty) {
-                    return _buildEmptyState();
+                    return _buildEmptyState(context);
                   }
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -102,7 +107,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                         padding: const EdgeInsets.only(bottom: 16),
                         child: ExperienceCard(
                           experience: experiences[index],
-                          onTap: () => context.go(
+                          onTap: () => context.push(
                             '/experience/${experiences[index].id}',
                           ),
                         ),
@@ -120,19 +125,24 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Text('🔍', style: TextStyle(fontSize: 64)),
           const SizedBox(height: 16),
-          Text('No experiences found', style: AppTypography.titleMedium),
+          Text(
+            'No experiences found',
+            style: AppTypography.titleMedium.copyWith(
+              color: AppColors.getTextPrimary(context),
+            ),
+          ),
           const SizedBox(height: 8),
           Text(
             'Try adjusting your search or filters',
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textMuted,
+              color: AppColors.getTextSecondary(context),
             ),
           ),
         ],

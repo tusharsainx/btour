@@ -15,7 +15,7 @@ class GuideDashboardScreen extends ConsumerWidget {
     final allGuideBookings = ref.watch(guideBookingsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackground(context),
       appBar: AppBar(title: const Text('Guide Dashboard')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

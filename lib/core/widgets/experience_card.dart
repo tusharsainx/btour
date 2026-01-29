@@ -30,7 +30,7 @@ class ExperienceCard extends ConsumerWidget {
         child: Container(
           width: isCompact ? 280 : double.infinity,
           decoration: BoxDecoration(
-            color: AppColors.cardLight,
+            color: AppColors.getCard(context),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
@@ -47,8 +47,9 @@ class ExperienceCard extends ConsumerWidget {
               Stack(
                 children: [
                   ClipRRect(
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(20)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
                     child: CachedImage(
                       imageUrl: experience.primaryImage,
                       width: double.infinity,
@@ -60,11 +61,14 @@ class ExperienceCard extends ConsumerWidget {
                     top: 12,
                     left: 12,
                     child: Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                        color: AppColors.getCategoryColor(experience.category)
-                            .withValues(alpha: 0.9),
+                        color: AppColors.getCategoryColor(
+                          experience.category,
+                        ).withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -94,11 +98,10 @@ class ExperienceCard extends ConsumerWidget {
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          isInWishlist
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color:
-                              isInWishlist ? AppColors.error : AppColors.textMuted,
+                          isInWishlist ? Icons.favorite : Icons.favorite_border,
+                          color: isInWishlist
+                              ? AppColors.error
+                              : AppColors.textMuted,
                           size: 22,
                         ),
                       ),
@@ -109,8 +112,10 @@ class ExperienceCard extends ConsumerWidget {
                     bottom: 12,
                     right: 12,
                     child: Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(12),
@@ -145,7 +150,9 @@ class ExperienceCard extends ConsumerWidget {
                     // Title
                     Text(
                       experience.title,
-                      style: AppTypography.titleMedium,
+                      style: AppTypography.titleMedium.copyWith(
+                        color: AppColors.getTextPrimary(context),
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -163,7 +170,7 @@ class ExperienceCard extends ConsumerWidget {
                           child: Text(
                             experience.location,
                             style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.textMuted,
+                              color: AppColors.getTextSecondary(context),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -189,13 +196,14 @@ class ExperienceCard extends ConsumerWidget {
                               experience.rating.toStringAsFixed(1),
                               style: AppTypography.labelLarge.copyWith(
                                 fontWeight: FontWeight.w600,
+                                color: AppColors.getTextPrimary(context),
                               ),
                             ),
                             const SizedBox(width: 4),
                             Text(
                               '(${experience.reviewCount})',
                               style: AppTypography.bodySmall.copyWith(
-                                color: AppColors.textMuted,
+                                color: AppColors.getTextSecondary(context),
                               ),
                             ),
                           ],
@@ -206,11 +214,15 @@ class ExperienceCard extends ConsumerWidget {
                           children: [
                             Text(
                               experience.formattedPrice,
-                              style: AppTypography.price,
+                              style: AppTypography.price.copyWith(
+                                color: AppColors.primary,
+                              ),
                             ),
                             Text(
                               'per person',
-                              style: AppTypography.caption,
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.getTextSecondary(context),
+                              ),
                             ),
                           ],
                         ),
@@ -232,11 +244,7 @@ class ExperienceCardSmall extends ConsumerWidget {
   final Experience experience;
   final VoidCallback? onTap;
 
-  const ExperienceCardSmall({
-    super.key,
-    required this.experience,
-    this.onTap,
-  });
+  const ExperienceCardSmall({super.key, required this.experience, this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -245,7 +253,7 @@ class ExperienceCardSmall extends ConsumerWidget {
       child: Container(
         width: 200,
         decoration: BoxDecoration(
-          color: AppColors.cardLight,
+          color: AppColors.getCard(context),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -259,8 +267,9 @@ class ExperienceCardSmall extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
               child: CachedImage(
                 imageUrl: experience.primaryImage,
                 width: 200,
@@ -274,7 +283,9 @@ class ExperienceCardSmall extends ConsumerWidget {
                 children: [
                   Text(
                     experience.title,
-                    style: AppTypography.titleSmall,
+                    style: AppTypography.titleSmall.copyWith(
+                      color: AppColors.getTextPrimary(context),
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -285,13 +296,17 @@ class ExperienceCardSmall extends ConsumerWidget {
                       const SizedBox(width: 2),
                       Text(
                         experience.rating.toStringAsFixed(1),
-                        style: AppTypography.labelSmall,
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.getTextPrimary(context),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           experience.formattedPrice,
-                          style: AppTypography.priceSmall,
+                          style: AppTypography.priceSmall.copyWith(
+                            color: AppColors.primary,
+                          ),
                           textAlign: TextAlign.right,
                         ),
                       ),

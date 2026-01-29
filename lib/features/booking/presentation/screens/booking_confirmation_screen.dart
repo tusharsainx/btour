@@ -23,6 +23,16 @@ class BookingConfirmationScreen extends ConsumerWidget {
             if (booking == null) {
               return const Center(child: Text('Booking not found'));
             }
+
+            // Check if this is a confirmed booking or just viewing details
+            final isConfirmed = booking.isConfirmed || booking.isPaid;
+            final title = isConfirmed
+                ? 'Booking Confirmed!'
+                : 'Booking Details';
+            final subtitle = isConfirmed
+                ? 'Your booking has been successfully placed'
+                : 'View your booking information below';
+
             return Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -33,25 +43,29 @@ class BookingConfirmationScreen extends ConsumerWidget {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: AppColors.success.withValues(alpha: 0.1),
+                      color:
+                          (isConfirmed ? AppColors.success : AppColors.primary)
+                              .withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.check_circle,
-                      color: AppColors.success,
+                    child: Icon(
+                      isConfirmed ? Icons.check_circle : Icons.info_outline,
+                      color: isConfirmed
+                          ? AppColors.success
+                          : AppColors.primary,
                       size: 60,
                     ),
                   ),
                   const SizedBox(height: 32),
                   Text(
-                    'Booking Confirmed!',
+                    title,
                     style: AppTypography.headlineMedium.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Your booking has been successfully placed',
+                    subtitle,
                     style: AppTypography.bodyMedium.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -81,7 +95,7 @@ class BookingConfirmationScreen extends ConsumerWidget {
                         ),
                         const Divider(height: 24),
                         _DetailRow(
-                          label: 'Guests',
+                          label: 'Travelers',
                           value: '${booking.numberOfPeople} people',
                         ),
                         const Divider(height: 24),
@@ -93,6 +107,90 @@ class BookingConfirmationScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
+                  // Travelers info section
+                  if (booking.metadata != null &&
+                      booking.metadata!['travelers'] != null) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.people,
+                                color: AppColors.primary,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Travelers',
+                                style: AppTypography.titleSmall,
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 20),
+                          ...((booking.metadata!['travelers'] as List)
+                              .asMap()
+                              .entries
+                              .map((entry) {
+                                final index = entry.key;
+                                final traveler = Map<String, dynamic>.from(
+                                  entry.value as Map,
+                                );
+                                return Padding(
+                                  padding: EdgeInsets.only(
+                                    top: index > 0 ? 12 : 0,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 14,
+                                        backgroundColor: AppColors.primary
+                                            .withValues(alpha: 0.1),
+                                        child: Text(
+                                          '${index + 1}',
+                                          style: AppTypography.labelSmall
+                                              .copyWith(
+                                                color: AppColors.primary,
+                                              ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              traveler['name'] as String,
+                                              style: AppTypography.bodyMedium,
+                                            ),
+                                            Text(
+                                              '${traveler['age']} yrs • ${traveler['gender']}',
+                                              style: AppTypography.bodySmall
+                                                  .copyWith(
+                                                    color: AppColors.textMuted,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              })
+                              .toList()),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   Text(
                     'Booking ID: ${booking.id.substring(0, 8).toUpperCase()}',
@@ -101,13 +199,19 @@ class BookingConfirmationScreen extends ConsumerWidget {
                   const Spacer(),
                   GradientButton(
                     text: 'View My Bookings',
-                    onPressed: () => context.go('/bookings'),
+                    onPressed: () {
+                      ref.read(navigationIndexProvider.notifier).state = 2;
+                      context.go('/bookings');
+                    },
                   ),
                   const SizedBox(height: 16),
                   PrimaryButton(
                     text: 'Back to Home',
                     isOutlined: true,
-                    onPressed: () => context.go('/home'),
+                    onPressed: () {
+                      ref.read(navigationIndexProvider.notifier).state = 0;
+                      context.go('/home');
+                    },
                   ),
                 ],
               ),

@@ -22,7 +22,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   final List<OnboardingData> _pages = [
     OnboardingData(
-      image: 'https://images.unsplash.com/photo-1545378889-a8e6e2df4738?w=800',
+      image:
+          'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
       title: 'Discover Spiritual Bihar',
       description:
           'Explore ancient Buddhist sites, temples, and spiritual journeys in the land of enlightenment.',
@@ -95,8 +96,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             right: 20,
             child: TextButton(
               onPressed: () {
-                ref.read(authNotifierProvider.notifier).continueAsGuest();
-                context.go('/home');
+                context.go('/login');
               },
               child: Text(
                 'Skip',

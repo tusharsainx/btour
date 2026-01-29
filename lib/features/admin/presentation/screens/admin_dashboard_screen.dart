@@ -9,12 +9,12 @@ class AdminDashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final statsAsync = ref.watch(bookingStatsProvider);
+    final stats = ref.watch(bookingStatsProvider);
     final allBookings = ref.watch(allBookingsProvider);
     final allExperiences = ref.watch(experiencesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackground(context),
       appBar: AppBar(title: const Text('Admin Dashboard')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -22,31 +22,27 @@ class AdminDashboardScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Stats cards
-            statsAsync.when(
-              data: (stats) => Row(
-                children: [
-                  Expanded(
-                    child: _StatCard(
-                      title: 'Total Bookings',
-                      value: '${stats['totalBookings'] ?? 0}',
-                      icon: Icons.calendar_today,
-                      color: AppColors.primary,
-                    ),
+            Row(
+              children: [
+                Expanded(
+                  child: _StatCard(
+                    title: 'Total Bookings',
+                    value: '${stats['totalBookings'] ?? 0}',
+                    icon: Icons.calendar_today,
+                    color: AppColors.primary,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _StatCard(
-                      title: 'Revenue',
-                      value:
-                          '₹${((stats['totalRevenue'] ?? 0) / 1000).toStringAsFixed(1)}K',
-                      icon: Icons.currency_rupee,
-                      color: AppColors.success,
-                    ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _StatCard(
+                    title: 'Revenue',
+                    value:
+                        '₹${((stats['totalRevenue'] ?? 0) / 1000).toStringAsFixed(1)}K',
+                    icon: Icons.currency_rupee,
+                    color: AppColors.success,
                   ),
-                ],
-              ),
-              loading: () => const CircularProgressIndicator(),
-              error: (e, _) => Text('Error: $e'),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Row(
@@ -70,20 +66,11 @@ class AdminDashboardScreen extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: statsAsync.when(
-                    data: (stats) => _StatCard(
-                      title: 'This Month',
-                      value: '${stats['monthlyBookings'] ?? 0}',
-                      icon: Icons.trending_up,
-                      color: AppColors.accent,
-                    ),
-                    loading: () => const _StatCard(
-                      title: 'This Month',
-                      value: '-',
-                      icon: Icons.trending_up,
-                      color: AppColors.accent,
-                    ),
-                    error: (_, __) => const SizedBox(),
+                  child: _StatCard(
+                    title: 'This Month',
+                    value: '${stats['monthlyBookings'] ?? 0}',
+                    icon: Icons.trending_up,
+                    color: AppColors.accent,
                   ),
                 ),
               ],
@@ -115,65 +102,63 @@ class AdminDashboardScreen extends ConsumerWidget {
             // Recent bookings
             Text('Recent Bookings', style: AppTypography.titleMedium),
             const SizedBox(height: 12),
-            allBookings.when(
-              data: (bookings) => Column(
-                children: bookings
-                    .take(5)
-                    .map(
-                      (booking) => Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    booking.experienceTitle,
-                                    style: AppTypography.titleSmall,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  Text(
-                                    booking.userName,
-                                    style: AppTypography.bodySmall.copyWith(
-                                      color: AppColors.textMuted,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _getStatusColor(
-                                  booking.status,
-                                ).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                booking.status.toUpperCase(),
-                                style: AppTypography.labelSmall.copyWith(
-                                  color: _getStatusColor(booking.status),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+            ...allBookings.when(
+              data: (bookings) => bookings
+                  .take(5)
+                  .map(
+                    (booking) => Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    )
-                    .toList(),
-              ),
-              loading: () => const CircularProgressIndicator(),
-              error: (e, _) => Text('Error: $e'),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  booking.experienceTitle,
+                                  style: AppTypography.titleSmall,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  booking.userName,
+                                  style: AppTypography.bodySmall.copyWith(
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(
+                                booking.status,
+                              ).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              booking.status.toUpperCase(),
+                              style: AppTypography.labelSmall.copyWith(
+                                color: _getStatusColor(booking.status),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+              loading: () => [const Center(child: CircularProgressIndicator())],
+              error: (e, _) => [Center(child: Text('Error: $e'))],
             ),
           ],
         ),

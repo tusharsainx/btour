@@ -14,7 +14,7 @@ class WishlistScreen extends ConsumerWidget {
     final wishlistAsync = ref.watch(wishlistExperiencesProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.getBackground(context),
       appBar: AppBar(title: const Text('Wishlist')),
       body: wishlistAsync.when(
         data: (experiences) {
@@ -40,7 +40,10 @@ class WishlistScreen extends ConsumerWidget {
                   PrimaryButton(
                     text: 'Explore Experiences',
                     width: 200,
-                    onPressed: () => context.go('/explore'),
+                    onPressed: () {
+                      ref.read(navigationIndexProvider.notifier).state = 1;
+                      context.go('/explore');
+                    },
                   ),
                 ],
               ),
@@ -55,7 +58,7 @@ class WishlistScreen extends ConsumerWidget {
                 padding: const EdgeInsets.only(bottom: 16),
                 child: ExperienceCard(
                   experience: experience,
-                  onTap: () => context.go('/experience/${experience.id}'),
+                  onTap: () => context.push('/experience/${experience.id}'),
                 ),
               );
             },
