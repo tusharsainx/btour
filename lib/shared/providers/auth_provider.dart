@@ -158,6 +158,22 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
     }
   }
 
+  Future<void> updateProfilePhoto(String? photoUrl) async {
+    final currentUser = state.value;
+    if (currentUser == null) return;
+
+    try {
+      final updatedUser = currentUser.copyWith(
+        photoUrl: photoUrl,
+        updatedAt: DateTime.now(),
+      );
+      await _repository.saveUser(updatedUser);
+      state = AsyncValue.data(updatedUser);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
   Future<void> signOut() async {
     await _repository.clearSession();
     // We don't delete the user on sign out, just session
