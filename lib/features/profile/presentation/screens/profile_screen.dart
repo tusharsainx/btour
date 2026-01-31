@@ -1,9 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/providers/providers.dart';
+import 'personal_info_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -27,7 +32,7 @@ class ProfileScreen extends ConsumerWidget {
           return SingleChildScrollView(
             child: Column(
               children: [
-                // Profile header
+                // Profile header with enhanced background
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.only(
@@ -43,40 +48,188 @@ class ProfileScreen extends ConsumerWidget {
                       bottomRight: Radius.circular(32),
                     ),
                   ),
-                  child: Column(
+                  child: Stack(
                     children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.white,
-                        child: user.photoUrl != null
-                            ? ClipOval(
-                                child: Image.network(
-                                  user.photoUrl!,
-                                  width: 96,
-                                  height: 96,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : Text(
-                                user.name[0].toUpperCase(),
-                                style: AppTypography.displaySmall.copyWith(
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        user.name,
-                        style: AppTypography.headlineSmall.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                      // Decorative circles
+                      Positioned(
+                        top: -30,
+                        right: -30,
+                        child: Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.1),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        user.email,
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: Colors.white.withValues(alpha: 0.8),
+                      Positioned(
+                        bottom: -40,
+                        left: -40,
+                        child: Container(
+                          width: 150,
+                          height: 150,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.05),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 50,
+                        left: 30,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.08),
+                          ),
+                        ),
+                      ),
+                      // Profile content
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Stack(
+                              children: [
+                                CircleAvatar(
+                                  radius: 50,
+                                  backgroundColor: Colors.white,
+                                  child: user.photoUrl != null
+                                      ? ClipOval(
+                                          child: _buildProfileImage(
+                                            user.photoUrl!,
+                                          ),
+                                        )
+                                      : Icon(
+                                          Icons.person,
+                                          size: 50,
+                                          color: AppColors.primary,
+                                        ),
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: () async {
+                                      // Show image picker dialog
+                                      showModalBottomSheet(
+                                        context: context,
+                                        builder: (context) => Container(
+                                          padding: const EdgeInsets.all(20),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                'Change Profile Picture',
+                                                style:
+                                                    AppTypography.titleMedium,
+                                              ),
+                                              const SizedBox(height: 20),
+                                              ListTile(
+                                                leading: const Icon(
+                                                  Icons.camera_alt,
+                                                ),
+                                                title: const Text('Take Photo'),
+                                                onTap: () async {
+                                                  Navigator.pop(context);
+                                                  await _pickAndSaveImage(
+                                                    ref,
+                                                    ImageSource.camera,
+                                                    context,
+                                                  );
+                                                },
+                                              ),
+                                              ListTile(
+                                                leading: const Icon(
+                                                  Icons.photo_library,
+                                                ),
+                                                title: const Text(
+                                                  'Choose from Gallery',
+                                                ),
+                                                onTap: () async {
+                                                  Navigator.pop(context);
+                                                  await _pickAndSaveImage(
+                                                    ref,
+                                                    ImageSource.gallery,
+                                                    context,
+                                                  );
+                                                },
+                                              ),
+                                              if (user.photoUrl != null)
+                                                ListTile(
+                                                  leading: const Icon(
+                                                    Icons.delete,
+                                                    color: AppColors.error,
+                                                  ),
+                                                  title: const Text(
+                                                    'Remove Photo',
+                                                    style: TextStyle(
+                                                      color: AppColors.error,
+                                                    ),
+                                                  ),
+                                                  onTap: () async {
+                                                    Navigator.pop(context);
+                                                    await ref
+                                                        .read(
+                                                          authNotifierProvider
+                                                              .notifier,
+                                                        )
+                                                        .updateProfilePhoto(
+                                                          null,
+                                                        );
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(
+                                                        const SnackBar(
+                                                          content: Text(
+                                                            'Profile photo removed',
+                                                          ),
+                                                          backgroundColor:
+                                                              AppColors.success,
+                                                        ),
+                                                      );
+                                                    }
+                                                  },
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              user.name,
+                              style: AppTypography.headlineSmall.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -88,6 +241,20 @@ class ProfileScreen extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     children: [
+                      _ProfileMenuItem(
+                        icon: Icons.person_outline,
+                        title: 'Personal Information',
+                        subtitle: 'View your account details',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  PersonalInfoScreen(user: user),
+                            ),
+                          );
+                        },
+                      ),
                       _ProfileMenuItem(
                         icon: Icons.favorite_outline,
                         title: 'Wishlist',
@@ -215,5 +382,78 @@ class _ProfileMenuItem extends StatelessWidget {
         trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted),
       ),
     );
+  }
+}
+
+// Helper function to build profile image from local file or network
+Widget _buildProfileImage(String photoUrl) {
+  // Check if it's a local file path
+  if (photoUrl.startsWith('/') || photoUrl.contains('\\')) {
+    final file = File(photoUrl);
+    if (file.existsSync()) {
+      return Image.file(file, width: 96, height: 96, fit: BoxFit.cover);
+    }
+  }
+
+  // Otherwise, try to load as network image
+  return Image.network(
+    photoUrl,
+    width: 96,
+    height: 96,
+    fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) {
+      return const Icon(Icons.person, size: 50, color: AppColors.primary);
+    },
+  );
+}
+
+// Helper function to pick and save image
+Future<void> _pickAndSaveImage(
+  WidgetRef ref,
+  ImageSource source,
+  BuildContext context,
+) async {
+  try {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(
+      source: source,
+      imageQuality: 80,
+      maxWidth: 800,
+      maxHeight: 800,
+    );
+
+    if (pickedFile != null) {
+      // Get the application documents directory
+      final Directory appDir = await getApplicationDocumentsDirectory();
+      final String fileName =
+          'profile_${DateTime.now().millisecondsSinceEpoch}${path.extension(pickedFile.path)}';
+      final String localPath = path.join(appDir.path, fileName);
+
+      // Copy the file to the local directory
+      final File localFile = await File(pickedFile.path).copy(localPath);
+
+      // Update user profile with local file path
+      await ref
+          .read(authNotifierProvider.notifier)
+          .updateProfilePhoto(localFile.path);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile photo updated successfully'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    }
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update photo: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 }

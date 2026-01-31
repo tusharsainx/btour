@@ -82,6 +82,45 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
 
   Future<void> _handleBooking(Experience experience, UserModel? user) async {
     focusNode?.unfocus();
+
+    // Check if user is in guest mode
+    final isGuestMode = ref.read(isGuestModeProvider);
+    if (isGuestMode || user == null) {
+      // Show dialog prompting user to login
+      final shouldProceed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Login Required'),
+          content: const Text(
+            'You need to login to complete your booking. Would you like to login or create an account now?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              child: const Text('Login'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldProceed == true && mounted) {
+        // Navigate to login screen
+        context.go('/login');
+        return;
+      } else {
+        return;
+      }
+    }
+
     if (_selectedDate == null) {
       ScaffoldMessenger.of(
         context,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/widgets.dart';
@@ -122,7 +124,7 @@ class ExperienceDetailScreen extends ConsumerWidget {
                         style: AppTypography.headlineMedium,
                       ),
                       const SizedBox(height: 8),
-                      // Location
+                      // Location with Google Maps
                       Row(
                         children: [
                           const Icon(
@@ -131,10 +133,53 @@ class ExperienceDetailScreen extends ConsumerWidget {
                             color: AppColors.textMuted,
                           ),
                           const SizedBox(width: 4),
-                          Text(
-                            experience.location,
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: AppColors.textMuted,
+                          Expanded(
+                            child: Text(
+                              experience.location,
+                              style: AppTypography.bodyMedium.copyWith(
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: () {
+                              final mapsUrl =
+                                  'https://www.google.com/maps/dir/?api=1&destination=${experience.latitude},${experience.longitude}';
+                              launchGoogleMaps(mapsUrl);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.directions,
+                                    size: 16,
+                                    color: AppColors.primary,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Directions',
+                                    style: AppTypography.labelSmall.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -224,16 +269,67 @@ class ExperienceDetailScreen extends ConsumerWidget {
                                     'Your Guide',
                                     style: AppTypography.caption,
                                   ),
-                                  Text(
-                                    experience.guideName,
-                                    style: AppTypography.titleMedium,
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          experience.guideName,
+                                          style: AppTypography.titleMedium,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Icon(
+                                        Icons.verified,
+                                        color: AppColors.primary,
+                                        size: 18,
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      RatingBarIndicator(
+                                        rating: experience.rating,
+                                        itemSize: 14,
+                                        itemBuilder: (_, __) => const Icon(
+                                          Icons.star,
+                                          color: AppColors.accent,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        experience.rating.toStringAsFixed(1),
+                                        style: AppTypography.caption.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.chat_outlined),
-                              onPressed: () {},
+                              icon: FaIcon(
+                                FontAwesomeIcons.whatsapp,
+                                color: Color(
+                                  0xFF25D366,
+                                ), // Official WhatsApp green
+                                size: 28,
+                              ),
+                              onPressed: () {
+                                // Open WhatsApp - using a generic tourism number for demo
+                                // In production, you'd get this from the guide's profile
+                                final phone =
+                                    '916005418713'; // Replace with actual guide phone
+                                final message = Uri.encodeComponent(
+                                  'Hi ${experience.guideName}, I\'m interested in "${experience.title}" experience.',
+                                );
+                                final whatsappUrl =
+                                    'https://wa.me/$phone?text=$message';
+                                // Launch URL (note: you'll need url_launcher package)
+                                launchWhatsApp(whatsappUrl);
+                              },
                             ),
                           ],
                         ),
@@ -373,5 +469,27 @@ class _BottomBookingBar extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// Helper function to launch WhatsApp
+Future<void> launchWhatsApp(String url) async {
+  final uri = Uri.parse(url);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } else {
+    // If WhatsApp is not installed, open in browser
+    await launchUrl(
+      Uri.parse('https://web.whatsapp.com'),
+      mode: LaunchMode.externalApplication,
+    );
+  }
+}
+
+// Helper function to launch Google Maps
+Future<void> launchGoogleMaps(String url) async {
+  final uri = Uri.parse(url);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 }
